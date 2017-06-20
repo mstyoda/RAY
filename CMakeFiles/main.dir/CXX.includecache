@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/mstyoda/桌面/CV/Ray/main.cpp
+obj.h
+/home/mstyoda/桌面/CV/Ray/obj.h
+
+/home/mstyoda/桌面/CV/Ray/obj.h
+iostream
+-
+cstdio
+-
+cstdlib
+-
+cstring
+-
+string
+-
+cmath
+-
+set
+-
+vector
+-
+opencv2/opencv.hpp
+-
+

@@ -1,0 +1,3 @@
+/home/mstyoda/桌面/CV/Ray/CMakeFiles/rebuild_cache.dir
+/home/mstyoda/桌面/CV/Ray/CMakeFiles/edit_cache.dir
+/home/mstyoda/桌面/CV/Ray/CMakeFiles/main.dir
