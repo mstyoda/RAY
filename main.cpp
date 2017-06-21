@@ -2,8 +2,8 @@
 
 #define pb push_back
 
-const int N = 3000000,W = 800,H = 600;
-const db pi = 2.0 * atan2(1,0),rds = 0.17;
+const int N = 3000000,W = 850,H = 650;
+const db pi = 2.0 * atan2(1,0),rds = 0.017;
 
 vector <obj * > OBJ;
 vector <Point> Light;
@@ -26,7 +26,7 @@ inline bool cmpz(const Cp & A,const Cp & B){ return sn(A.P.z - B.P.z) < 0;}
 inline void Init()
 {
 	srand(time(0)); Light.clear(); 
-	Light.pb(Point(1,1,1)); OBJ.clear(); 
+	Light.pb(Point(1,0.5,0.5)); OBJ.clear(); 
 	OBJ.pb(new Plane(Line(Point(0,0,0),Point(0,0,1)),Point(1,0,0),Point(0,1,0)));
 	OBJ.pb(new Plane(Line(Point(0,0,2),Point(0,0,-1)),Point(1,0,0),Point(0,1,0)));
 	OBJ.pb(new Plane(Line(Point(0,-1.5,0),Point(0,1,0)),Point(1,0,0),Point(0,0,1)));
@@ -35,13 +35,16 @@ inline void Init()
 	
 	Mtr mtr;
 	mtr.ar = 80; mtr.at = 0; mtr.ad = 10; 
-	mtr.Kd = Color(0.0,0,0.0); mtr.Ka = Color(0.1,0.1,0.1); mtr.Ks = Color(0.5,0.5,0.5);
-	mtr.wr = Color(0.9,0.9,0.9); mtr.wt = Color(0,0,0); mtr.wm = Color(0.1,0.1,0.1);
-	OBJ[1]->mtr = mtr;
+	mtr.Kd = Color(0.5,0.5,0.5); mtr.Ka = Color(0.0,0.0,0.0); mtr.Ks = Color(0.5,0.5,0.5);
+	mtr.wr = Color(0.699,0.699,0.699); mtr.wt = Color(0,0,0); mtr.wm = Color(0.001,0.001,0.001);
+	OBJ[2]->mtr = mtr;
 	OBJ[0]->v1 = OBJ[0]->u1 = -2; OBJ[0]->v2 = OBJ[0]->u2 = 2;
+	OBJ[1]->mtr.Kd = Color(0.1,0.1,0.6);
 	OBJ[2]->mtr.Kd = Color(0.25,0.25,0.75);
 	OBJ[3]->mtr.Kd = Color(0.25,0.75,0.25);
-	OBJ[4]->mtr.Kd = Color(0.5,0.1,0.5);
+	OBJ[4]->mtr.Kd = Color(0.05,0.55,0.55);
+	
+	OBJ[0]->Load((char*)("floor.jpg"));
 	tCP = 0; tot = 0;
 	int i,j; rep(i,0,H - 1) rep(j,0,W - 1){IMG[i][j] = Color(0,0,0); cnt[i][j] = 0.;}
 }
@@ -76,7 +79,7 @@ inline void getCp(Line L,int i,int j,Color w,int deep)
 			Color wm = OBJ[ck]->mtr.wm;
 			Cp cp; cp.P = OBJ[ck]->get(bestuv); cp.i = i; cp.j = j; 
 			cp.k = ck; cp.V = L; cp.N = OBJ[ck]->getN(L,bestuv);
-			cp.w = w;
+			cp.w = w; cp.uv = bestuv;
 			CP[++tCP] = cp; 
 		}
 		//if (deep >= 1) printf("out\n");
@@ -97,12 +100,12 @@ inline void Build(int x,int k,int L,int R)
 inline void Prepare()
 {
 	int i,j,k; Point P; Line L;
-	Eye = Point(-1.5,W * 0.5 / 900.,H * 0.5 / 900.); 
+	Eye = Point(-1.7,W * 0.5 / 1000.,H * 0.5 / 1000.) + Point(0.1,0,0.5); 
 	rep(i,0,W - 1) rep(j,0,H - 1)
 	{
 		P = Point(0,i,H - 1 - j) + (Point(0,1,1) * ((db)(rand() % 100) / 100.0));//random select
-		P = P * (1.0 / 900.0);
-		L = Line(Eye,P + Point(-1.2,0,0.0) - Eye); 
+		P = P * (1.0 / 1000.0) + Point(0.1,0,0.5);
+		L = Line(Eye,P + Point(-1.1,0,0.0) - Eye); 
 		//printf("Line (%lf,%lf,%lf) [%lf %lf %lf]\n",L.P0.x,L.P0.y,L.P0.z,L.Pd.x,L.Pd.y,L.Pd.z);
 		getCp(L,j,i,Color(1.0,1.0,1.0),0);
 	}
@@ -120,7 +123,7 @@ inline void Add(int x,Line L,Color w,UV uv,Cp cp)
 	int i = cp.i,j = cp.j,k = cp.k;
 	db g = (cnt[i][j] * 0.7 + 0.7) / (cnt[i][j] + 1.0);
 	Tree[x].rd *= g; cnt[i][j] += 1.0;
-	Tree[x].flux = (Tree[x].flux + (w * OBJ[k]->mtr.Kd) * (1./pi)) * g;
+	Tree[x].flux = (Tree[x].flux + (w * OBJ[k]->getKd(uv)) * (1./pi)) * g;
 }
 inline void search(int i,int k,Line L,Color w,UV uv,int ck)
 {
@@ -128,7 +131,7 @@ inline void search(int i,int k,Line L,Color w,UV uv,int ck)
 	cutl = cutr = 0; cp = Tree[i].now;
 	if (len(cp.P,C) <= Tree[i].rd)
 	{ 
-		Add(i,L,w,uv,cp);
+		Add(i,L,w,cp.uv,cp);
 	}
 	if (k == 0){ cutl = sn(C.x - cp.P.x - rds) > 0; cutr = sn(cp.P.x - C.x - rds) > 0; }
 	if (k == 1){ cutl = sn(C.y - cp.P.y - rds) > 0; cutr = sn(cp.P.y - C.y - rds) > 0; }
@@ -173,7 +176,7 @@ inline void PUT()
 	rep(k,1,tot)
 	{
 		arr hp = Tree[k];
-		sIMG[hp.now.i][hp.now.j] = sIMG[hp.now.i][hp.now.j] + hp.flux *  (1.0 / (pi * hp.rd * 1000. * 1000.));
+		sIMG[hp.now.i][hp.now.j] = sIMG[hp.now.i][hp.now.j] + hp.now.w * hp.flux *  (1.0 / (pi * hp.rd * 10000. * 1000.));
 	}
 	rep(i,0,H - 1) 
 	{
@@ -187,20 +190,46 @@ inline void PUT()
 	}
 	cv :: imwrite("1.jpg",img);
 }
+
+int primes[61]={
+	2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,
+	83,89,97,101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,
+	191,193,197,199,211,223,227,229,233,239,241,251,257,263,269,271,277,281,283
+};
+inline int rev(const int i,const int p) {
+	if (i==0) return i; else return p-i;
+}
+double hal(const int b, int j) {
+	const int p = primes[b]; 
+	double h = 0.0, f = 1.0 / (db)p, fct = f;
+	while (j > 0) {
+		h += rev(j % p, p) * fct; j /= p; fct *= f;
+	}
+	return h;
+}
+void genp(Line* pr, Color* f, int i)
+{
+	*f = Color(1500,1500,1500) * (pi * 4.0); // flux
+	double p = 2. * pi * hal(0,i), t = 2. * acos(sqrt(1.-hal(1,i)));
+	double st = sin(t);
+	pr->Pd = Point(cos(p) * st,cos(t),sin(p) * st);
+	pr->P0 = Light[0];
+}
 inline void Work()
 {
-	int i; Line L; Point pd,C0; db maxr = 0.5,r,phi,theta;
-	for (db u = 0.0; u <= 1.0; u += 0.001)
+	int samps = 10000,num_photon; num_photon = samps;
+	for(int i = 0;i < num_photon; i++)
 	{
-		printf("u = %lf\n",u);
-		for (db v = 0.0; v <= 1.0; v += 0.001)
+		double p = 100. * (i + 1) / num_photon;
+		int m = 1000 * i;
+		Line r; Color f;
+		for(int j = 0;j < 1000;j++)
 		{
-			db du,dv; du = (rand() % 100)/100000.0; dv = (rand() % 100)/100000.0;
-			r = maxr * (u + du); theta = 2.0 * pi * (v + dv);
-			phi = pi * (u + du);
-			getph(Line(Light[0],Point(sin(phi) * cos(theta),sin(phi) * sin(theta),cos(phi))),Color(2500,2500,2500) * 4 * pi,0);
+			genp(&r,&f,m+j); 
+			getph(r,f,0);
 		}
-		PUT();
+		printf("i = %d\n",i);
+		if (i % 10 ==0) PUT();
 	}
 }
 

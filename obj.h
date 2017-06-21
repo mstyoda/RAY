@@ -82,7 +82,7 @@ public:
 class Cp
 {
 public:
-	Point P; int i,j,k; Line N,V; Color w,I;
+	Point P; int i,j,k; Line N,V; Color w,I; UV uv;
 };
 class Mtr
 {
@@ -94,7 +94,31 @@ public:
 class obj
 {
 public:
-	Mtr mtr;db u1,u2,v1,v2;
+	Mtr mtr;db u1,u2,v1,v2; int row,col; db rc,cc;
+	Color F[710][710];
+	inline void Load(char *fname)
+	{
+		cv :: Mat img = cv :: imread(fname);
+		db r,g,b;
+		int i,j; uchar *o; rep(i,0,358)
+		{
+			o = img.ptr<uchar>(i);
+			rep(j,0,587)
+			{
+				b = (db)(*o++); g = (db)(*o++); r = (db)(*o++);
+				F[i][j] = Color(r,g,b) * (1.0/255);
+			}
+		}
+		mtr.Kd = Color(0,0,0); row = 359; col = 588; rc = 200.0; cc = 100.0;
+	}
+	inline Color getKd(UV uv)
+	{
+		Color Ans; int u,v;
+		u = (int)(uv.u * (db)rc); v = (int)(uv.v * (db)cc);
+		if (row){ u %= row; v %= col; }
+		if (u < 0) u += row; if (v < 0) v += col;
+		return mtr.Kd + F[u][v];
+	}
 	inline virtual Point get(UV uv)
 	{
 
@@ -133,6 +157,7 @@ public:
 		mtr.Kd = Color(0.75,0,25.25); mtr.Ka = Color(0.0,0.0,0.0); mtr.Ks = Color(0.0,0.0,0.0);
 		mtr.wr = Color(0.0,0.0,0.0); mtr.wt = Color(0,0,0); mtr.wm = Color(0.75,0.25,0.25);
 		u1 = -2; u2 = 2; v1 = -1.5; v2 = 2;
+		int i,j; rep(i,0,99) rep(j,0,99) F[i][j] = Color(0,0,0);
 	}
 	inline virtual Point get(UV uv)
 	{
