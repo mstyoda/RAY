@@ -94,7 +94,7 @@ public:
 class obj
 {
 public:
-	Mtr mtr;
+	Mtr mtr;db u1,u2,v1,v2;
 	inline virtual Point get(UV uv)
 	{
 
@@ -129,9 +129,10 @@ public:
 	inline Plane(Line n,Point a,Point b)
 	{
 		N = n; A = a; B = b; mtr.n1 = 1.0; mtr.n2 = 1.6; 
-		mtr.ar = 40; mtr.at = 0; mtr.ad = 50; 
-		mtr.Kd = Color(0.6,0.1,0.1); mtr.Ka = Color(1.0,1.0,1.0); mtr.Ks = Color(0.9,0.9,0.9);
-		mtr.wr = Color(0.6,0.6,0.6); mtr.wt = Color(0,0,0); mtr.wm = Color(1,1,1);
+		mtr.ar = 20; mtr.at = 0; mtr.ad = 80; 
+		mtr.Kd = Color(0.75,0,25.25); mtr.Ka = Color(0.0,0.0,0.0); mtr.Ks = Color(0.0,0.0,0.0);
+		mtr.wr = Color(0.0,0.0,0.0); mtr.wt = Color(0,0,0); mtr.wm = Color(0.75,0.25,0.25);
+		u1 = -2; u2 = 2; v1 = -1.5; v2 = 2;
 	}
 	inline virtual Point get(UV uv)
 	{
@@ -140,7 +141,7 @@ public:
 
 	inline virtual Line getReflect(Line L,UV uv)
 	{
-		return Line(get(uv),L.Pd - N.Pd * (2.0 * (N * N))); 
+		return Line(get(uv),L.Pd - N.Pd * (2.0 * (L * N))); 
 	}
 
 	inline virtual Line getN(Line L,UV uv)
@@ -171,6 +172,7 @@ public:
 			d = A * T2; e = B * T2; f = C * T2; 
 			u = (b * f - c * e) / (b * d - a * e); v = (c * d - a * f) / (b * d - a * e);
 		}
+		if ((u < u1) || (u > u2) || (v < v1) || (v > v2)) {u = 1.2345; v = 5.4321;}																																																																																																																																																																																																																																																																																																																																																																																																																			
 		//printf("Line (%lf,%lf,%lf) [%lf %lf %lf]\n",L.P0.x,L.P0.y,L.P0.z,L.Pd.x,L.Pd.y,L.Pd.z);
 		return UV(u,v);
 	}
