@@ -3,7 +3,7 @@
 #define pb push_back
 
 const int N = 3000000,W = 850,H = 650;
-const db pi = 2.0 * atan2(1,0),rds = 0.017;
+const db pi = 2.0 * atan2(1,0),rds = 0.027;
 
 vector <obj * > OBJ;
 vector <Point> Light;
@@ -45,6 +45,7 @@ inline void Init()
 	OBJ[4]->mtr.Kd = Color(0.05,0.55,0.55);
 	
 	OBJ[0]->Load((char*)("floor.jpg"));
+	OBJ[0]->mtr.wr = Color(0.25,0.25,0.25); OBJ[0]->mtr.wm = Color(0.75,0.75,0.75);
 	tCP = 0; tot = 0;
 	int i,j; rep(i,0,H - 1) rep(j,0,W - 1){IMG[i][j] = Color(0,0,0); cnt[i][j] = 0.;}
 }

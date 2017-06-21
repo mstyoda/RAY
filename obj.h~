@@ -109,7 +109,7 @@ public:
 				F[i][j] = Color(r,g,b) * (1.0/255);
 			}
 		}
-		mtr.Kd = Color(0,0,0); row = 359; col = 588; rc = -350.0; cc = 500.0;
+		mtr.Kd = Color(0,0,0); row = 359; col = 588; rc = -350.0; cc = 400.0;
 	}
 	inline Color getKd(UV uv)
 	{
