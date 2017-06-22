@@ -179,7 +179,9 @@ public:
 	
 	inline virtual Line getReflect(Line L,UV uv)
 	{
-		return Line(get(uv),L.Pd - N.Pd * (2.0 * (L * N))); 
+		Point Pd = L.Pd - N.Pd * (2.0 * (L * N));
+		Pd = Pd * (-1.0 /sqrt(Pd*Pd));
+		return Line(get(uv),Pd);
 	}
 	
 	inline virtual Line getTrans(Line L,UV uv)
@@ -210,6 +212,74 @@ public:
 		return UV(u,v);
 	}
 
+};
+class Ball : public obj
+{
+public:
+	Point P0; db r;
+	Ball(){}
+	Ball(Point p0,db R,Color WR,Color WT,Color KD)
+	{
+		P0 = p0; r = R; mtr.Kd = KD; 
+		//mtr.wr = Color(0.999,0.999,0.999); mtr.wt = Color(0.8,0.8,0.8)*0;
+		mtr.wr = WR; mtr.wt = WT;
+	}
+	inline virtual Point get(UV uv)
+	{
+		db u = uv.u,v = uv.v;
+		u *= pi; v *= 2. * pi;
+		return P0 + Point(r * sin(u) * cos(v),r * sin(u) * sin(v),r * cos(u));
+	}
+	inline virtual Line getN(Line L, UV uv)
+	{
+		Point P = get(uv),N; N = P - P0; N = N * (1.0 / sqrt(N * N));
+		return Line(P,N);
+	}
+	inline virtual Line getReflect(Line L,UV uv)
+	{
+		Line N = getN(L,uv);
+		Point Pd = L.Pd - (N.Pd * (2.0 * (L * N)));
+		Pd = Pd * (1.0 /sqrt(Pd*Pd));
+		return Line(get(uv),Pd);
+	}
+	inline virtual Line getTrans(Line L,UV uv)
+	{
+		Line N = getN(L,uv);
+		db n; if (N * L < 0) n = 1./1.6; else {N.Pd = N.Pd * (-1); n = 1.6;}
+		db cosI = -(N * L),cosT2 = 1.0 - (n * n) * (1 - cosI * cosI);
+		if (cosT2 > 1e-9)
+		{ 
+			Point pd = (L.Pd * n) + (N.Pd * (n * cosI - sqrt(cosT2)));
+			//printf("%lf %lf %lf cos = %lf\n",(pd-L.Pd)*(pd-L.Pd),L*L,N*N,cosI);
+			return Line(get(uv),pd);
+		}
+		return getReflect(L,uv);
+	}
+	inline db Sqr(db x){return x * x;}
+
+	inline virtual UV getCross(Line L)
+	{
+		db a,b,c,d,f,g,R; R = r * r;
+		a = L.P0.x - P0.x; b = L.P0.y - P0.y; c = L.P0.z - P0.z;
+		d = L.Pd.x; f = L.Pd.y; g = L.Pd.z;
+		db t,delta,dfg;
+		delta = Sqr(2*a*d + 2*b*f + 2*c*g) - 4*(d*d+f*f+g*g)*(a*a+b*b+c*c-R);
+		dfg = (d*d + f*f + g*g);
+		if ((delta > 1e-6) && (dfg > 1e-6))
+		{
+			db best = 1e+9;
+			t = (-sqrt(delta) - 2*a*d - 2*b*f - 2*c*g) / (2 * dfg);
+			if (t > 1e-6) best = min(best,t);
+			t = (sqrt(delta) - 2*a*d - 2*b*f - 2*c*g) / (2 * dfg);
+			if (t > 1e-6) best = min(best,t);
+			if (best > 1e+9) return UV(1.2345,5.4321);
+			Point C = L.P0 + L.Pd * best - P0;
+			db u,v;
+			u = acos(C.z); v = atan2(C.y,C.x);
+			return UV(u/pi,v/(2.*pi));
+		}
+		return UV(1.2345,5.4321);
+	}
 };
 class Bobj : public obj
 {
@@ -356,9 +426,8 @@ public:
 		P[3] = Point(0.0,0.0,0.0); P[2] = Point(0.0,0.84,0.39); 
 		P[1] = Point(0.0,0.76,0.67); P[0] = Point(0.0,1.0,1.0);
 		n = 3;
-		mtr.wr = Color(0.9,0.9,0.9); mtr.wt = Color(0.,0.,0.);
-		mtr.Kd = Color(0.75,0.25,0.25) * 0.1;
-		mtr.ad = 100; mtr.ar = 100;
+		mtr.wr = Color(0.0,0.0,0.0); mtr.wt = Color(0.,0.,0.);
+		mtr.Kd = Color(0.75,0.25,0.25) * 0.0;
 		int i; rep(i,0,3) P[i] = P[i] * 0.35;
 		ay3 = 0.266; ay2 = -0.714; ay1 = 0.798; ay0 = 0;
 		az3 = 0.644; az2 = -0.9975; az1 = 0.7035; az0 = 0;
