@@ -15,6 +15,8 @@
 using namespace std;
 typedef double db;
 
+const db pi = 2. * atan2(1,0);
+
 class UV
 {
 public:
@@ -224,22 +226,59 @@ public:
 		return Point(B.y * cos(v),B.y * sin(v),B.z);
 	}
 	
-	inline db f(db u){return ay0 + u*(ay1 + u*(ay2 + u*(ay3)));}
-	inline db g(db u){return az0 + u*(az1 + u*(az2 + u*(az3)));}
-	inline db fd(db u){return ay1 + 2.*ay2*u + 3.*ay3*u*u;}
-	inline db gd(db u){return az1 + 2.*az2*u + 3.*az3*u*u;}
+	inline db f(db u){return get(UV(u,0)).y;}
+	inline db g(db u){return get(UV(u,0)).z;}
+	inline db fd(db u){return (ay1 + 2.*ay2*u + 3.*ay3*u*u);}
+	inline db gd(db u){return (az1 + 2.*az2*u + 3.*az3*u*u);}
 	inline virtual Line getN(Line L,UV uv)
 	{
-		
+		db u = uv.u,v = uv.v;
+		db A,B,C;
+			  /*d(x,y,z)/d(t,u,v)
+			  (Pd.x),(-cos(v)*fd(u)),(f(u)*sin(v)),
+			  (Pd.y),(-sin(v)*fd(u)),(-f(u)*cos(v)),
+			  (Pd.z),(-gd(u)),(0.0);
+			  */
+		A = (-sin(v)*fd(u)) * ((0.0)) - (-f(u)*cos(v)) * (-gd(u)); 
+		B = (-gd(u)) * (f(u)*sin(v)) - (0.0) * (-cos(v)*fd(u));
+		C = (-cos(v)*fd(u)) * (-f(u)*cos(v)) - (f(u)*sin(v)) * (-sin(v)*fd(u));
+		Line N; N.P0 = get(uv); N.Pd = Point(A,B,C) * (1.0 / sqrt(A*A + B*B + C*C)) * (1.);
+		return N;
 	}
-	inline virtual UV getCross(Line L)
+	inline virtual Line getReflect(Line L,UV uv)
 	{
-		//printf("L = (%lf,%lf,%lf) [%lf %lf %lf]\n",L.P0.x,L.P0.y,L.P0.z,L.Pd.x,L.Pd.y,L.Pd.z);
-		//求解射线L和包围圆柱的交
-		int i,j; db z1,z2,r2,k,bestk; r2 = 0.; bestk = 1e+9;
-		rep(i,0,n) r2 = max(r2,(P[i].x * P[i].x + P[i].y * P[i].y));
-		z2 = -1e+9; z1 = -z1; rep(i,0,n){z2 = max(z2,P[i].z); z1 = min(z1,P[i].z);}
+		Line N = getN(L,uv);
+		return Line(N.P0,L.Pd - N.Pd * (2.0 * (L * N))); 
+	}
+	inline UV ND(db u,db v,db t,Line L)
+	{
+		Eigen :: Matrix3f ma; int td = 0;
 		Point P0 = L.P0, Pd = L.Pd,C;
+		while (td <= 10)
+		{
+				Point C = (P0 + Pd * t) - get(UV(u,v));
+				Point Ut = get(UV(u,v));
+				if ((C*C < 1e-5) && (t > 0)) return UV(u,v);
+				ma << (Pd.x),(-cos(v)*fd(u)),(f(u)*sin(v)),
+					  (Pd.y),(-sin(v)*fd(u)),(-f(u)*cos(v)),
+					  (Pd.z),(-gd(u)),(0.0);
+				ma = ma.inverse().eval();
+				C = (P0 + Pd * t) - get(UV(u,v));
+				Eigen :: Vector3f V1(C.x,C.y,C.z);
+				V1 = ma * V1;
+				t = -V1[0] + t; u = -V1[1] + u; v = -V1[2] + v;
+				td++;
+		}
+		return UV(1.2345,5.4321);
+	}
+	inline UV Solve(db u1, db u2, Line L)
+	{
+		db z1,z2,r1,r2,k,bestk;
+		Point P0 = L.P0, Pd = L.Pd,P1,P2;
+		
+		P1 = get(UV(u1,0)); P2 = get(UV(u2,0));
+		z1 = P1.z; z2 = P2.z;
+		r1 = P1.y*P1.y; r2 = P2.y*P2.y; 
 		std::vector<db> K; K.clear();
 		if (Pd.z)
 		{
@@ -251,106 +290,86 @@ public:
 		db a = P0.x,b = Pd.x,c = P0.y,d = Pd.y;
 		if (b * b + d * d > 1e-6)
 		{
+			k = (-sqrt(-a*a*d*d + 2.*a*b*c*d + b*b*(-c*c) + b*b*r1 + d*d*r1) - a*b - c*d)/(b*b + d*d);
+			if (k > 1e-6) K.push_back(k);
+			k = (sqrt(-a*a*d*d + 2.*a*b*c*d + b*b*(-c*c) + b*b*r1 + d*d*r1) - a*b - c*d)/(b*b + d*d);
+			if (k > 1e-6) K.push_back(k);
+		}
+		if (b * b + d * d > 1e-6)
+		{
 			k = (-sqrt(-a*a*d*d + 2.*a*b*c*d + b*b*(-c*c) + b*b*r2 + d*d*r2) - a*b - c*d)/(b*b + d*d);
 			if (k > 1e-6) K.push_back(k);
-			//bestk = k > 1e-6 ? min(k,bestk) : bestk;
+			k = (sqrt(-a*a*d*d + 2.*a*b*c*d + b*b*(-c*c) + b*b*r2 + d*d*r2) - a*b - c*d)/(b*b + d*d);
+			if (k > 1e-6) K.push_back(k);
 		}
 
-		//牛顿迭代
-		for (int l = 0; l < (int)K.size(); l++)
+		UV INF = UV(1.2345,5.4321),ans,cur; ans = INF;
+		if (!K.size()) return INF;
+		if (fabs(u2 - u1) < 1e-2)
 		{
-			k = K[l]; C = P0 + Pd * k;
-			printf("z1 = %lf z2 = %lf C.z = %lf\n",z1,z2,C.z);
-			if ((C.z > z1 - 0.00001) && (C.z < z2 + 0.00001))
+			int i; rep(i,0,K.size()-1)
 			{
-				db u,v,t; int td = 0; t = k; u = 0.5 * (C.z - P[0].z) / (P[3].z - P[0].z); v = acos(C.x/sqrt(C.x*C.x+C.y*C.y));
-				v = v / (4.0 * atan2(1,0));
-				
-				printf("u = %lf v = %lf t = %lf\n",u,v,t); v = 0.0;
-				Eigen :: Matrix3f ma; td = 0;
-				while (td <= 100)
-				{
-						C = (P0 + Pd * t) - get(UV(u,v));
-						Point Ut = get(UV(u,v));
-						printf("len = %.2lf C = (%.2lf,%.2lf,%.2lf)\n",sqrt(C*C),Ut.x,Ut.y,Ut.z);
-						if (C*C < 1e-5) return UV(u,v);
-						ma << (Pd.x),(-cos(v)*fd(u)),(f(u)*sin(v)),
-							  (Pd.y),(-sin(v)*fd(u)),(-f(u)*cos(v)),
-							  (Pd.z),(-gd(u)),(0.0);
-						ma = ma.inverse().eval();
-						C = (P0 + Pd * t) - get(UV(u,v));
-						Eigen :: Vector3f V1(C.x,C.y,C.z);
-						V1 = ma * V1;
-						t = -V1[0] + t; u = -V1[1] + u; v = -V1[2] + v;
-						td++;
-				}
+				k = K[i]; Point C = P0 + Pd * k; db phi;
+				phi = atan2(C.y,C.x);
+				if (phi < 0) phi += 2. * pi;
+				ans = ND(u1,phi/(4.0 * atan2(1,0)),k,L);
+				if (fabs(ans.u - INF.u) + fabs(ans.v - INF.v) > 1e-5) return ans;
 			}
+			return INF;
 		}
-		printf("NO Solution\n");
-		return UV(1.2345,5.4321);
+		else
+		{
+			UV ANS; ANS = INF; db best = 1e+9;
+			ans = Solve(u1,(u1 + u2) * 0.5,L);
+			if (fabs(ans.u - INF.u) + fabs(ans.v - INF.v) > 1e-5)
+			{
+				Point cur = (get(ans) - L.P0); 
+				if (cur * cur < best){ ANS = ans; best = cur * cur;}
+			}
+			ans = Solve((u1 + u2) * 0.5,u2,L);
+			if (fabs(ans.u - INF.u) + fabs(ans.v - INF.v) > 1e-5)
+			{
+				Point cur = (get(ans) - L.P0); 
+				if (cur * cur < best){ ANS = ans; best = cur * cur;}
+			}
+			return ANS;
+		}
+	}
+	inline virtual UV getCross(Line L)
+	{
+		return Solve(0.,1.,L);
 	}
 };
 
-class bowlout : public Bobj
+class B1 : public Bobj
 {
 public:
-	bowlout()
+	B1()
 	{
-		//y : 1 * 0 *  (1-u)^3 + 3 * 1.1 * u * (1-u)^2 + 3 *  0.65 * u^2 * (1-u) + 1 * 1 * u^3
-		//z : 1 * 0 *  (1-u)^3 + 3 * 0 * u * (1-u)^2 + 3 *  0.78 * u^2 * (1-u) + 1 * 0.75 * u^3
-		P[0] = Point(0.0,0.0,0.0); P[1] = Point(0.0,1.1,0.0); 
-		P[2] = Point(0.0,0.65,0.78); P[3] = Point(0.0,1.0,0.75);
-		ay0 = 0.; ay1 = 3.3; ay2 = 4.65; ay3 = 2.35;
-		az0 = 0.; az1 = 0.0; az2 = 2.34; az3 = 1.59;
+		P[3] = Point(0.0,0.0,0.0); P[2] = Point(0.0,0.84,0.39); 
+		P[1] = Point(0.0,0.76,0.67); P[0] = Point(0.0,1.0,1.0);
+		n = 3;
+		mtr.wm = Color(0.0,0.0,0.0); mtr.wr = Color(1.,1.,1.); mtr.wt = Color(0.,0.,0.);
+		mtr.ad = 100; mtr.ar = 100;
+		int i; rep(i,0,3) P[i] = P[i] * 0.35;
+		ay3 = 0.266; ay2 = -0.714; ay1 = 0.798; ay0 = 0;
+		az3 = 0.644; az2 = -0.9975; az1 = 0.7035; az0 = 0;
+
+	}
+};
+
+
+class B2 : public Bobj
+{
+public:
+	B2()
+	{
+		P[0] = Point(0.0,0,0); P[1] = Point(0,.99,.01); 
+		P[2] = Point(0,.93,.59); P[3] = Point(0,1.,1.);
 		n = 3;
 		mtr.wm = Color(1.,1.,1.); mtr.wr = Color(0.,0.,0.); mtr.wt = Color(0.,0.,0.);
-		mtr.Kd = Color(0.25,0.25,0.75);
+		mtr.Kd = Color(0.25,0.25,0.75); mtr.ad = 100;
+		int i; rep(i,0,3) P[i] = P[i] * 0.35;
 	}
 };
 
-
-class bowlin : public Bobj
-{
-public:
-	bowlin()
-	{
-		P[3] = Point(0.0,0.0,0.0); P[2] = Point(0.0,1.1,0.3); 
-		P[1] = Point(0.0,0.45,0.78); P[0] = Point(0.0,1.0,0.75);
-		n = 3;
-	}
-};
-
-class bowlbt2 : public Bobj
-{
-public:
-	bowlbt2()
-	{
-		P[3] = Point(0.0,376.0,-221.0); P[1] = Point(0.0,499,-220); 
-		P[2] = Point(0.0,377,-294); P[0] = Point(0.0,475,-319);
-		int i; rep(i,0,3) P[i] = P[i] * (1.0/1150.0) + Point(0,0,0.09 + 0.03);
-		n = 3;
-	}
-};
-
-class bowlbt1 : public Bobj
-{
-public:
-	bowlbt1()
-	{
-		P[3] = Point(0.0,361.0,-203.0); P[1] = Point(0.0,454,-279); 
-		P[2] = Point(0.0,457,-202); P[0] = Point(0.0,364,-283);
-		int i; rep(i,0,3) P[i] = P[i] * (1.0/1300.0) + Point(0,0,0.1 + 0.03);
-		n = 3;
-	}
-};
-class bowlbt0 : public Bobj
-{
-public:
-	bowlbt0()
-	{
-		P[3] = Point(0.0,353.0,-240.0); P[1] = Point(0.0,353,-357); 
-		P[2] = Point(0.0,334,-281); P[0] = Point(0.0,442,-399);
-		int i; rep(i,0,3) P[i] = P[i] * (1.0/1300.0) + Point(0,0,0.175 + 0.03);
-		n = 3;
-	}
-};

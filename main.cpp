@@ -2,8 +2,8 @@
 
 #define pb push_back
 
-const int N = 3000000,W = 80,H = 60;
-const db pi = 2.0 * atan2(1,0),rds = 0.217;
+const int N = 3000000,W = 800,H = 600;
+const db rds = 0.017;
 
 vector <obj * > OBJ;
 vector <Point> Light;
@@ -29,27 +29,28 @@ inline void Init()
 	//Light.pb(Point(1,0.5,0.5)); Light.pb(Point(1.9,-1.4,1.9));
 	//Light.pb(Point(1,0.5,0.5) + Point(-1,0,0)); Light.pb(Point(1.9,-1.4,1.9)+Point(-5,0,0));
 	
-	Light.pb(Point(0,0,2));
+	Light.pb(Point(1-0.15,0.5,1.8));
+	Light.pb(Point(0.5,0.5,1.5));
+	Light.pb(Point(0.0,0.45,1.5));
 	OBJ.clear(); 
-	/*
-	OBJ.pb(new Plane(Line(Point(0,0,0),Point(0,0,1)),Point(1,0,0),Point(0,1,0)));
-	OBJ.pb(new Plane(Line(Point(0,0,2),Point(0,0,-1)),Point(1,0,0),Point(0,1,0)));
-	OBJ.pb(new Plane(Line(Point(0,-1.5,0),Point(0,1,0)),Point(1,0,0),Point(0,0,1)));
-	OBJ.pb(new Plane(Line(Point(0,1.5,0),Point(0,-1,0)),Point(1,0,0),Point(0,0,1)));
-	OBJ.pb(new Plane(Line(Point(2,0,0),Point(-1,0,0)),Point(0,1,0),Point(0,0,1)));
-	OBJ.pb(new Plane(Line(Point(-2,0,0),Point(1,0,0)),Point(0,1,0),Point(0,0,1)));
 	
-	OBJ[0]->v1 = OBJ[0]->u1 = -2; OBJ[0]->v2 = OBJ[0]->u2 = 2;
+	OBJ.pb(new Plane(Line(Point(-0.35,0,0),Point(0,0,1)),Point(1,0,0),Point(0,1,0)));
+	//OBJ.pb(new Plane(Line(Point(-0.35,0,2),Point(0,0,-1)),Point(1,0,0),Point(0,1,0)));
+	//OBJ.pb(new Plane(Line(Point(-0.35,-1.5,0),Point(0,1,0)),Point(1,0,0),Point(0,0,1)));
+	//OBJ.pb(new Plane(Line(Point(-0.35,1.5,0),Point(0,-1,0)),Point(1,0,0),Point(0,0,1)));
+	//OBJ.pb(new Plane(Line(Point(2-0.35,0,0),Point(-1,0,0)),Point(0,1,0),Point(0,0,1)));
+	//OBJ.pb(new Plane(Line(Point(-2-0.35,0,0),Point(1,0,0)),Point(0,1,0),Point(0,0,1)));
+	//OBJ.pb(new B1);
+
+	OBJ[0]->v1 = OBJ[0]->u1 = -5.3; OBJ[0]->v2 = OBJ[0]->u2 = 5.3;
 	OBJ[0]->Load((char*)("floor.jpg"),-350.,500.);
 	OBJ[0]->mtr.wr = Color(0.15,0.15,0.15); OBJ[0]->mtr.wm = Color(0.85,0.85,0.85);
 	
-	OBJ[1]->mtr.Kd = Color(0.25,0.25,0.75);
-	OBJ[2]->mtr.Kd = Color(0.25,0.75,0.25);
-	OBJ[3]->mtr.Kd = Color(0.75,0.25,0.25);
-	OBJ[4]->mtr.Kd = Color(0.25,0.75,0.75);
-	*/
+	//OBJ[1]->mtr.Kd = Color(0.25,0.25,0.75);
+	//OBJ[2]->mtr.Kd = Color(0.25,0.75,0.25);
+	//OBJ[3]->mtr.Kd = Color(0.75,0.25,0.25);
+	//OBJ[4]->mtr.Kd = Color(0.25,0.75,0.75);
 
-	OBJ.pb(new bowlout);
 	tCP = 0; tot = 0;
 	int i,j;
 	rep(i,0,H - 1) rep(j,0,W - 1){IMG[i][j] = Color(0,0,0); cnt[i][j] = 0.;}
@@ -62,7 +63,7 @@ inline int toInt(double x)
 } 
 inline void getCp(Line L,int i,int j,Color w,int deep)
 {
-	if (sn(w.len()) && (deep < 20))
+	if (sn(w.len()) && (deep < 6))
 	{
 		int k,ck; db dr = 1e+10,cur; UV bestuv; ck = -1;
 		rep(k,0,(int)OBJ.size() - 1)
@@ -108,13 +109,11 @@ inline void Build(int x,int k,int L,int R)
 inline void Prepare()
 {
 	int i,j,k; Point P; Line L;
-	Eye = Point(-1.7,W * 0.5 / 1000.,H * 0.5 / 1000.) + Point(0.1,0,0.5); 
-	Point D = Point(-5,0,0);
-	Eye = Eye + D;
+	Eye = Point(-1.7,W * 0.5 / 1000.,H * 0.5 / 1000.) + Point(-0.35,0,0.55); 
 	rep(i,0,W - 1) rep(j,0,H - 1)
 	{
 		P = Point(0,i,H - 1 - j) + (Point(0,1,1) * ((db)(rand() % 100) / 100.0));//random select
-		P = P * (1.0 / 100.0) + Point(0.1,0,0.5) + Point(-2,0,0);
+		P = P * (1.0 / 1000.0) + Point(-0.35,0,0.5);
 		L = Line(Eye,P + Point(-1.1,0,0.0) - Eye); 
 		//printf("Line (%lf,%lf,%lf) [%lf %lf %lf]\n",L.P0.x,L.P0.y,L.P0.z,L.Pd.x,L.Pd.y,L.Pd.z);
 		getCp(L,j,i,Color(1.0,1.0,1.0),0);
@@ -131,7 +130,7 @@ inline db mi(db x,int m)
 }
 inline void Add(int x,Line L,Color w,UV uv,Cp cp)
 {
-	printf ("IN ADD\n");
+	//printf ("IN ADD\n");
 	int i = cp.i,j = cp.j,k = cp.k;
 	db g = (cnt[i][j] * 0.9 + 0.9) / (cnt[i][j] + 1.0);
 	Tree[x].rd *= g; cnt[i][j] += 1.0;
@@ -154,8 +153,8 @@ inline void search(int i,int k,Line L,Color w,UV uv,int ck)
 inline void getph(Line L,Color w,int deep)
 {
 	int k,ck = -1; UV bestuv; db dr = 1e+10,cur;
-	printf("Line (%lf,%lf,%lf) [%lf %lf %lf]\n",L.P0.x,L.P0.y,L.P0.z,L.Pd.x,L.Pd.y,L.Pd.z);
-	/*rep(k,0,(int)OBJ.size() - 1)
+	//printf("Line (%lf,%lf,%lf) [%lf %lf %lf]\n",L.P0.x,L.P0.y,L.P0.z,L.Pd.x,L.Pd.y,L.Pd.z);
+	rep(k,0,(int)OBJ.size() - 1)
 	{
 		UV uv = OBJ[k]->getCross(L),Inf = UV(1.2345,5.4321);
 		Point C = OBJ[k]->get(uv);
@@ -167,7 +166,7 @@ inline void getph(Line L,Color w,int deep)
 	}
 	if (ck != -1)
 	{
-		printf("has cross\n");
+		//printf("has cross\n");
 		Point C = OBJ[ck]->get(bestuv);
 		if (sn(w.len()) && (deep <= 7))
 		{
@@ -178,7 +177,7 @@ inline void getph(Line L,Color w,int deep)
 			if (ad) search(1,0,L,w * ad * 0.01,bestuv,ck);
 		}
 		else search(1,0,L,w * 0.01,bestuv,ck);
-	}*/
+	}
 }
 Color sIMG[H + 10][W + 10];
 inline void PUT()
@@ -222,43 +221,46 @@ double hal(const int b, int j) {
 }
 void genp(Line* pr, Color* f, int i,Point lt,db c)
 {
-	*f = Color(3500,3500,3500) * (pi * 4.0); // flux
+	*f = Color(5500,5500,5500) * (pi * 4.0); // flux
 	double p = 2. * pi * hal(0,i), t = c * acos(sqrt(1.-hal(1,i)));
 	double st = sin(t);
 	if (c > 1) pr->Pd = Point(cos(p) * st,cos(t),sin(p) * st);
-	else pr->Pd = Point(cos(p) * st,sin(p) * st,-cos(t));
+	else{t += pi / 10; pr->Pd = Point(cos(p) * st,sin(p) * st,-cos(t));}
 	pr->P0 = lt;
 }
 inline void Work()
 {
 	int samps = 10000,num_photon; num_photon = samps;
-	for(int i = 0;i < 1; i++)
+	for(int i = 0;i < 1000; i++)
 	{
 		double p = 100. * (i + 1) / num_photon;
 		int m = 1000 * i;
 		Line r; Color f;
 		for(int j = 0;j < 1000;j++)
 		{
-			genp(&r,&f,m+j,Light[0],0.3);
+			genp(&r,&f,m+j,Light[0],2.0);
 			getph(r,f,0);
-			//genp(&r,&f,m+j,Light[1],0.3);
-			//getph(r,f,0);
+			genp(&r,&f,m+j,Light[1],0.2);
+			getph(r,f,0);
+			genp(&r,&f,m+j,Light[2],0.2);
+			getph(r,f,0);
 		}
 		printf("i = %d\n",i);
-		//if (i % 10 ==0) PUT();
+		if (i % 10 == 0) PUT();
 	}
 }
 
 int main()
 {
 	Init();
-	Point P0,Pd;
+	/*Point P0,Pd;
 	P0 = Point(0,0,2); Pd = Point(0.057756,0.062943,-0.996345);
 	UV uv = OBJ[0]->getCross(Line(P0,Pd));
 	Point C = OBJ[0]->get(uv);
 	printf("(%.2lf,%.2lf,%.2lf)\n",C.x,C.y,C.z);
-	//Prepare();
-	//Work();
+	*/
+	Prepare();
+	Work();
 	//PUT();
 	return 0;
 }
