@@ -48,6 +48,10 @@ public:
 	{
 		return Point(x - B.x,y - B.y,z - B.z);
 	}
+	Point det(const Point &B)const
+	{
+		return Point(y * B.z - B.y * z,x * B.z - B.x * z,x * B.y - B.x * y);
+	}
 };
 
 class Line
@@ -113,7 +117,7 @@ public:
 				F[i][j] = Color(r,g,b) * (1.0 / 255.);
 			}
 		}
-		mtr.Kd = Color(0,0,0); row = img.rows; col = img.cols; rc = -350.0; cc = 500.0;
+		row = img.rows; col = img.cols; rc = -350.0; cc = 500.0;
 	}
 	inline Color getKd(UV uv)
 	{
@@ -157,9 +161,8 @@ public:
 	inline Plane(Line n,Point a,Point b)
 	{
 		N = n; A = a; B = b; mtr.n1 = 1.0; mtr.n2 = 1.6; 
-		mtr.ar = 20; mtr.at = 0; mtr.ad = 80; 
-		mtr.Kd = Color(0.75,0,25.25); mtr.Ka = Color(0.0,0.0,0.0); mtr.Ks = Color(0.0,0.0,0.0);
-		mtr.wr = Color(0.0,0.0,0.0); mtr.wt = Color(0,0,0); mtr.wm = Color(0.75,0.25,0.25);
+		mtr.Kd = Color(0.0,0.0,0.0);
+		mtr.wr = Color(0.0,0.0,0.0); mtr.wt = Color(0,0,0); 
 		u1 = -2; u2 = 2; v1 = -1.5; v2 = 2; 
 		int i,j; rep(i,0,row) rep(j,0,col)F[i][j] = Color(0.,0.,0.);
 	}
@@ -182,9 +185,10 @@ public:
 	inline virtual Line getTrans(Line L,UV uv)
 	{
 		db n; if (N * L < 0) n = mtr.n2 / mtr.n1; else n = mtr.n1 / mtr.n2;
+		//L.Pd = L.Pd * (-1.0);
 		db cosI = -(N * L),cosT2 = 1.0 - (n * n) * (1 - cosI * cosI);
 		if (cosT2 > 1e-9) return Line(get(uv),L.Pd * n + N.Pd * (n * cosI - sqrt(cosT2)));
-		return getReflect(L,uv);  
+		return getReflect(L,uv);
 	}
 
 	inline virtual UV getCross(Line L)
@@ -254,11 +258,11 @@ public:
 	{
 		Eigen :: Matrix3f ma; int td = 0;
 		Point P0 = L.P0, Pd = L.Pd,C;
-		while (td <= 10)
+		while (td <= 20)
 		{
 				Point C = (P0 + Pd * t) - get(UV(u,v));
 				Point Ut = get(UV(u,v));
-				if ((C*C < 1e-5) && (t > 0)) return UV(u,v);
+				if ((C*C < 1e-4) && (t > 1e-6)) return UV(u,v);
 				ma << (Pd.x),(-cos(v)*fd(u)),(f(u)*sin(v)),
 					  (Pd.y),(-sin(v)*fd(u)),(-f(u)*cos(v)),
 					  (Pd.z),(-gd(u)),(0.0);
@@ -271,6 +275,7 @@ public:
 		}
 		return UV(1.2345,5.4321);
 	}
+	inline db Sqr(db x){return x * x;}
 	inline UV Solve(db u1, db u2, Line L)
 	{
 		db z1,z2,r1,r2,k,bestk;
@@ -282,8 +287,10 @@ public:
 		std::vector<db> K; K.clear();
 		if (Pd.z)
 		{
-			k = (z1 - P0.z) / Pd.z; if (k > 1e-6) K.push_back(k);
-			k = (z2 - P0.z) / Pd.z; if (k > 1e-6) K.push_back(k);
+			k = (z1 - P0.z) / Pd.z; 
+			if ((k > 1e-6) ) K.push_back(k);
+			k = (z2 - P0.z) / Pd.z;
+			if ((k > 1e-6)) K.push_back(k);
 		}
 		//和柱面求交点，(P0.x + k * Pd.x)^2 + (P0.y + k * Pd.y)^2 = r^2
 		//令a = P0.x,b = Pd.x,c = P0.y,d = Pd.y,变为(a+b*k)^2+(c+d*k)^2 = r2
@@ -349,7 +356,8 @@ public:
 		P[3] = Point(0.0,0.0,0.0); P[2] = Point(0.0,0.84,0.39); 
 		P[1] = Point(0.0,0.76,0.67); P[0] = Point(0.0,1.0,1.0);
 		n = 3;
-		mtr.wm = Color(0.0,0.0,0.0); mtr.wr = Color(1.,1.,1.); mtr.wt = Color(0.,0.,0.);
+		mtr.wr = Color(0.9,0.9,0.9); mtr.wt = Color(0.,0.,0.);
+		mtr.Kd = Color(0.75,0.25,0.25) * 0.1;
 		mtr.ad = 100; mtr.ar = 100;
 		int i; rep(i,0,3) P[i] = P[i] * 0.35;
 		ay3 = 0.266; ay2 = -0.714; ay1 = 0.798; ay0 = 0;
