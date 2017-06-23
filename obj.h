@@ -179,8 +179,9 @@ public:
 	
 	inline virtual Line getReflect(Line L,UV uv)
 	{
-		Point Pd = L.Pd - N.Pd * (2.0 * (L * N));
-		Pd = Pd * (-1.0 /sqrt(Pd*Pd));
+		Line N = getN(L,uv);
+		Point Pd = L.Pd - (N.Pd * (2.0 * (L * N)));
+		Pd = Pd * (1.0 /sqrt(Pd*Pd));
 		return Line(get(uv),Pd);
 	}
 	

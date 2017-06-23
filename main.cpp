@@ -62,12 +62,14 @@ inline void Init()
 	
 	OBJ.pb(new B1);
 	OBJ[5]->Load((char*)("top.jpg"),-350,650);
+	
 	OBJ.pb(new Ball(Point(-0.5,0.5,1.75),0.15,Color(0.000,0.000,0.000),Color(0.999,0.999,0.999),Color(0.75,0.25,0.25)));
-	OBJ.pb(new Ball(Point(-0.6,1.3,0.2),0.2,Color(0.999,0.999,0.999),Color(0.0,0.0,0.0),Color(0,0,0)));
+	OBJ.pb(new Ball(Point(-0.6,1.3,0.2),0.2,Color(0,0,0),Color(0.0,0.0,0.0),Color(0,0,0)));
+	OBJ[7]->Load((char*)("wall.jpg"),-350.,650.);
 	//OBJ[5]->Load((char*)("wall.jpg"),-350.,650.);
-	OBJ[0]->Load((char*)("wall.jpg"),-350.,650.);
+	//OBJ[0]->Load((char*)("wall.jpg"),-350.,650.);
 	OBJ[0]->v1 = OBJ[0]->u1 = -5.3; OBJ[0]->v2 = OBJ[0]->u2 = 5.3;
-	//OBJ[0]->mtr.wr = Color(0,0,0);// OBJ[0]->mtr.wm = Color(0.2,0.2,0.2);
+	OBJ[0]->mtr.wr = Color(0.3,0.3,0.3); OBJ[0]->mtr.wt = Color(0.0,0.0,0.0);
 	//OBJ[1]->v1 = OBJ[1]->u1 = 0.; OBJ[1]->v2 = OBJ[1]->u2 = 0.8;
 
 	//OBJ[0]->mtr.Kd = Color(0.75,0.75,0.75);
@@ -92,7 +94,7 @@ inline int toInt(double x)
 } 
 inline void getCp(Line L,int i,int j,Color w,int deep)
 {
-	if (sn(w.len()) && (deep < 20))
+	if (sn(w.len()) && (deep < 6))
 	{
 		int k,ck; db dr = 1e+10,cur; UV bestuv; ck = -1;
 		rep(k,0,(int)OBJ.size() - 1)
@@ -119,7 +121,7 @@ inline void getCp(Line L,int i,int j,Color w,int deep)
 				getCp(OBJ[ck]->getReflect(L,bestuv),i,j,w * wr,deep + 1);
 				getCp(OBJ[ck]->getTrans(L,bestuv),i,j,w * wt,deep + 1);
 			}
-			if (!sn(wr.len()))
+			//if (!sn(wr.len()))
 			{
 				Cp cp; cp.P = OBJ[ck]->get(bestuv); cp.i = i; cp.j = j; 
 				cp.k = ck; cp.V = L; cp.N = OBJ[ck]->getN(L,bestuv);
@@ -211,12 +213,12 @@ inline void getph(Line L,Color w,int deep)
 	{
 		Point C = OBJ[ck]->get(bestuv);
 		//printf("has cross (%lf %lf %lf)\n",C.x,C.y,C.z);
-		if (sn(w.len()) && (deep <= 20))
+		if (sn(w.len()) && (deep <= 6))
 		{
 			Mtr mtr = OBJ[ck]->mtr;
 			if (sn(mtr.wr.len())) getph(OBJ[ck]->getReflect(L,bestuv),w * mtr.wr,deep + 1);
 			if (sn(mtr.wt.len())) getph(OBJ[ck]->getTrans(L,bestuv),w * mtr.wt,deep + 1);
-			if (!sn(mtr.wr.len()) && !sn(mtr.wt.len())) search(1,0,L,w,bestuv,ck);
+			if (!sn(mtr.wt.len()) && !sn(mtr.wr.len())) search(1,0,L,w,bestuv,ck);
 		}
 		//else search(1,0,L,w * 0.01,bestuv,ck);
 	}
@@ -261,9 +263,9 @@ double hal(const int b, int j) {
 	}
 	return h;
 }
-void genp(Line* pr, Color* f, int i,Point lt,db c)
+void genp(Line* pr, Color* f, int i,Point lt,db c,db F)
 {
-	*f = Color(2600,2600,2600) * (pi * 4.0); // flux
+	*f = Color(F,F,F) * (pi * 4.0); // flux
 	double p = 2. * pi * hal(0,i), t = c * acos(sqrt(1.-hal(1,i)));
 	double st = sin(t);
 	if (c > 0.9) pr->Pd = Point(cos(p) * st,cos(t),sin(p) * st);
@@ -280,10 +282,10 @@ inline void Work()
 		Line r; Color f;
 		for(int j = 0;j < 1000;j++)
 		{
-			genp(&r,&f,m+j,Light[0],2);
+			genp(&r,&f,m+j,Light[0],2.,500.);
 			getph(r,f,0);
-			//genp(&r,&f,m+j,Light[1],0.3);
-			//getph(r,f,0);
+			genp(&r,&f,m+j,Light[1],0.3,1800.);
+			getph(r,f,0);
 		}
 		printf("i = %d\n",i);
 		if (i % 10 == 0) PUT();
