@@ -2,7 +2,7 @@
 
 #define pb push_back
 
-const int N = 3000000,W = 800,H = 600;
+const int N = 1000000,W = 800,H = 600;
 const db rds = 0.017;
 
 vector <obj * > OBJ;

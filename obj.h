@@ -354,14 +354,29 @@ public:
 		
 		P1 = get(UV(u1,0)); P2 = get(UV(u2,0));
 		z1 = P1.z; z2 = P2.z;
-		r1 = P1.y*P1.y; r2 = P2.y*P2.y; 
+		r1 = P1.y*P1.y; r2 = P2.y*P2.y; if (r1 > r2) swap(r1,r2);
 		std::vector<db> K; K.clear();
 		if (Pd.z)
 		{
 			k = (z1 - P0.z) / Pd.z; 
-			if ((k > 1e-6) ) K.push_back(k);
+			if ((k > 1e-6))
+			{
+				db dis = Sqr(P0.x + k * Pd.x)  + Sqr(P0.y + k * Pd.y);
+				if ((dis >= r1) && (dis <= r2))
+				{ 
+					K.push_back(k);
+				}
+			}
 			k = (z2 - P0.z) / Pd.z;
-			if ((k > 1e-6)) K.push_back(k);
+			if ((k > 1e-6))
+			{
+				db dis = Sqr(P0.x + k * Pd.x)  + Sqr(P0.y + k * Pd.y);
+				if ((dis >= r1) && (dis <= r2))
+				{ 
+					K.push_back(k);
+				}
+				K.push_back(k);
+			}
 		}
 		//和柱面求交点，(P0.x + k * Pd.x)^2 + (P0.y + k * Pd.y)^2 = r^2
 		//令a = P0.x,b = Pd.x,c = P0.y,d = Pd.y,变为(a+b*k)^2+(c+d*k)^2 = r2
